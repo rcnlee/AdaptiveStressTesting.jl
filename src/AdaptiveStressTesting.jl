@@ -169,7 +169,6 @@ function get_reward_coverage(prob::Float64, event::Bool, terminal::Bool, dist::F
   #r = log(prob)
   r = prob
   if ast.sim.cas[1].coverage == 2
-    #println("NO")
     r += 1000.0
   elseif ast.sim.cas[1].coverage == 1
     r += (1-ast.sim.cas[1].mdp_reward) * 10 #* 10 #* ast.sim.cas[1].input.step
@@ -186,7 +185,6 @@ function get_reward_default(prob::Float64, event::Bool, terminal::Bool, dist::Fl
   r = log(prob)
   if event
     r += 0.0
-    #println("NMAC")
   elseif terminal #incur distance cost only if !event && terminal
     r += -dist
   end
