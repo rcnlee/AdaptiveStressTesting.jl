@@ -74,13 +74,14 @@ type AdaptiveStressTest
   t_index::Int64 #starts at 1 and counts up in ints
   rsg::RSG #random seed generator
   initial_rsg::RSG #initial
-  reset_rsg::Union(Nothing, RSG) #reset to this RSG
+  reset_rsg::Union(Nothing, RSG) #`reset to this RSG
 
   transition_model::TransitionModel
 
   function AdaptiveStressTest(p::ASTParams, sim, initialize_fn::Function,
                               step_fn::Function, isterminal_fn::Function,
-                              reward_fn::Function=get_reward_default)
+                              #reward_fn::Function=get_reward_default)
+                              reward_fn::Function=get_reward_coverage)
     ast = new()
     ast.params = p
     ast.sim = sim
@@ -163,11 +164,29 @@ function transition_model(ast::AdaptiveStressTest)
                          go_to_state)
 end
 
+function get_reward_coverage(prob::Float64, event::Bool, terminal::Bool, dist::Float64,
+                            ast::AdaptiveStressTest) #ast not used in default
+  #r = log(prob)
+  r = prob
+  if ast.sim.cas[1].coverage == 2
+    #println("NO")
+    r += 1000.0
+  elseif ast.sim.cas[1].coverage == 1
+    r += (1-ast.sim.cas[1].mdp_reward) * 10 #* 10 #* ast.sim.cas[1].input.step
+  elseif ast.sim.cas[1].coverage == 0 && !terminal
+    r += -ast.sim.cas[1].mdp_reward
+  elseif !event && terminal
+    #r += -dist
+  end
+  return r
+end
+
 function get_reward_default(prob::Float64, event::Bool, terminal::Bool, dist::Float64,
                             ast::AdaptiveStressTest) #ast not used in default
   r = log(prob)
   if event
     r += 0.0
+    println("NMAC")
   elseif terminal #incur distance cost only if !event && terminal
     r += -dist
   end
