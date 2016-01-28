@@ -74,7 +74,7 @@ type AdaptiveStressTest
   t_index::Int64 #starts at 1 and counts up in ints
   rsg::RSG #random seed generator
   initial_rsg::RSG #initial
-  reset_rsg::Union(Nothing, RSG) #`reset to this RSG
+  reset_rsg::Union(Nothing, RSG) #reset to this RSG
 
   transition_model::TransitionModel
 
@@ -186,7 +186,7 @@ function get_reward_default(prob::Float64, event::Bool, terminal::Bool, dist::Fl
   r = log(prob)
   if event
     r += 0.0
-    println("NMAC")
+    #println("NMAC")
   elseif terminal #incur distance cost only if !event && terminal
     r += -dist
   end
