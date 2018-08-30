@@ -55,24 +55,24 @@ const DEFAULT_RSGLENGTH = 3
 const G_RNG = MersenneTwister(0) #not used
 
 mutable struct ASTParams
-    max_steps::Int64 # safety for runaways in sim
-    rsg_length::Int64 # dictates number of unique available random seeds
-    init_seed::Int64 # initial value of seed on construct
-    reset_seed::Union{Void,Int64} #reset to this seed value on initialize()
+    max_steps::Int # safety for runaways in sim
+    rsg_length::Int # dictates number of unique available random seeds
+    init_seed::Int # initial value of seed on construct
+    reset_seed::Union{Void,Int} #reset to this seed value on initialize()
 end
 ASTParams() = ASTParams(0, DEFAULT_RSGLENGTH, 0, nothing)
 
 mutable struct AdaptiveStressTest
     params::ASTParams
     sim
-    sim_hash::UInt64 #keeps the sim in sync
+    sim_hash::UInt #keeps the sim in sync
 
     initialize::Function #initialize(sim)
     update::Function #update(sim)
     isterminal::Function #isterminal(sim)
     get_reward::Function #get_reward(prob, event, isterminal, dist, ast, sim)
 
-    t_index::Int64 #starts at 1 and counts up in ints
+    t_index::Int #starts at 1 and counts up in ints
     rsg::RSG #random seed generator
     initial_rsg::RSG #initial
     reset_rsg::Union{Void,RSG} #reset to this RSG
@@ -98,23 +98,27 @@ mutable struct AdaptiveStressTest
     end
 end
 
-mutable struct ASTAction <: Action
+mutable struct ASTAction{Int} <: Action
     rsg::RSG
 end
-ASTAction(len::Int64=DEFAULT_RSGLENGTH, seed::Int64=0) = ASTAction(RSG(len, seed))
+ASTAction(len::Int=DEFAULT_RSGLENGTH, seed::Int=0) = ASTAction{len}(RSG(len, seed))
 
 mutable struct ASTState <: State
-    t_index::Int64 #sanity check that at least the time corresponds
-    hash::UInt64 #hash sim state to match with ASTState
+    t_index::Int #sanity check that at least the time corresponds
+    hash::UInt #hash sim state to match with ASTState
     parent::Union{Void,ASTState} #parent state, root=nothing
     action::ASTAction #action taken from parent, root=0
 end
 
-function ASTState(t_index::Int64, parent::Union{Void,ASTState}, action::ASTAction)
+function ASTState(t_index::Int, parent::Union{Void,ASTState}, action::ASTAction)
     s = ASTState(t_index, 0, parent, action)
     s.hash = hash(s) #overwrites 0
     s
 end
+
+Base.rand{N}(rng::AbstractRNG, ::Type{ASTAction{N}}) = ASTAction(N, Int(rand(rng, UInt32)))
+Base.rand{N}(::Type{ASTAction{N}}) = ASTAction(N, Int(rand(Base.GLOBAL_RNG, UInt32)))
+Base.length{N}(::ASTAction{N}) = N 
 
 transition_model(ast::AdaptiveStressTest) = transition_model(ast, ast.sim)
 
