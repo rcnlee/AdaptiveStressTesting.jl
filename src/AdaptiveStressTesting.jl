@@ -129,7 +129,7 @@ function transition_model(ast::AdaptiveStressTest, ::Any)
         if ast.reset_rsg != nothing #reset if specified
             ast.rsg = deepcopy(ast.reset_rsg)
         end
-        s = ASTState(ast.t_index, nothing, ASTAction(deepcopy(ast.initial_rsg)))
+        s = ASTState(ast.t_index, nothing, ASTAction{length(ast.rsg)}(deepcopy(ast.initial_rsg)))
         ast.sim_hash = s.hash
         s
     end
@@ -189,7 +189,7 @@ end
 
 function random_action(rsg::RSG)
     next!(rsg)
-    ASTAction(deepcopy(rsg))
+    ASTAction{length(rsg)}(deepcopy(rsg))
 end
 
 function get_action_sequence(s::ASTState)
